@@ -3649,7 +3649,13 @@ export async function activate(context: vscode.ExtensionContext) {
           );
         }
       }
-      PartitionTableEditorPanel.show(context.extensionPath, filePath);
+      // TODO: Opening via URI (args) may point at a CSV outside the active ESP-IDF workspace;
+      // extra_partition_subtypes.inc is still read from workspaceRoot — decide if URI’s owning folder should win.
+      PartitionTableEditorPanel.show(
+        context.extensionPath,
+        filePath,
+        workspaceRoot.fsPath
+      );
     }
   );
   registerIDFCommand("esp.efuse.summary", async () => {

@@ -72,17 +72,25 @@ export class PartitionTableEditorPanel {
 
   private filePath: string;
 
-  public static show(extensionPath: string, filePath: string) {
+  private workspacePath: string;
+
+  public static show(
+    extensionPath: string,
+    filePath: string,
+    workspacePath: string
+  ) {
     const column = window.activeTextEditor
       ? window.activeTextEditor.viewColumn
       : undefined;
     if (!!PartitionTableEditorPanel.instance) {
       if (PartitionTableEditorPanel.instance.filePath === filePath) {
+        PartitionTableEditorPanel.instance.workspacePath = workspacePath;
         return PartitionTableEditorPanel.instance.panel.reveal(column);
       }
       // new filepath so update the webview
       PartitionTableEditorPanel.instance.getCSVFrom(filePath).then((csv) => {
         PartitionTableEditorPanel.instance.filePath = filePath;
+        PartitionTableEditorPanel.instance.workspacePath = workspacePath;
         PartitionTableEditorPanel.instance.initDataToWebview(csv);
       });
       return;
@@ -101,7 +109,8 @@ export class PartitionTableEditorPanel {
     PartitionTableEditorPanel.instance = new PartitionTableEditorPanel(
       panel,
       extensionPath,
-      filePath
+      filePath,
+      workspacePath
     );
   }
 
@@ -117,11 +126,13 @@ export class PartitionTableEditorPanel {
   private constructor(
     panel: WebviewPanel,
     extensionPath: string,
-    filePath: string
+    filePath: string,
+    workspacePath: string
   ) {
     this.panel = panel;
     this.extensionPath = extensionPath;
     this.filePath = filePath;
+    this.workspacePath = workspacePath;
     this.panel.onDidDispose(() => this.dispose(), null, this.disposable);
     this.panel.webview.onDidReceiveMessage(
       (e) => this.onMessage(e),
@@ -159,7 +170,8 @@ export class PartitionTableEditorPanel {
     }
   }
   private initDataToWebview(csv: string) {
-    this.sendMessageToWebView("loadInitialData", { csv });
+    const extraSubtypes = parseExtraSubtypesInc(this.workspacePath);
+    this.sendMessageToWebView("loadInitialData", { csv, extraSubtypes });
   }
   private sendMessageToWebView(command: string, payload: object) {
     if (this.panel && this.panel.webview) {
