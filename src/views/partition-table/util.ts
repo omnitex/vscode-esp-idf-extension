@@ -17,11 +17,13 @@
  */
 
 import { EOL } from "os";
-import { PartitionTable } from "./store";
+import { PartitionTable, type ExtraSubtype } from "./store";
 
 export function isValidJSON(
-  rows: PartitionTable.Row[]
+  rows: PartitionTable.Row[],
+  extraSubtypes: ExtraSubtype[] = []
 ): { error: string; row: number; ok: boolean } {
+  // TODO: Extras whose e.type is not "app" or "data" are unused here; extend if partition editor supports more type literals.
   function isInvalidRow(row: PartitionTable.Row): string {
     // NAME
     if (!row.name || row.name === "") {
@@ -49,20 +51,36 @@ export function isValidJSON(
     }
     // For type "app"
     if (row.type.match(/^(0x00|app)$/)) {
+      const appExtras = extraSubtypes.filter((e) => e.type === "app");
+      const extraAppNames = appExtras.map((e) => e.name);
+      const extraAppValues = appExtras.map((e) => e.value);
+      const subNorm = row.subtype.toLowerCase();
+      const isKnownAppName = extraAppNames.some((n) => n === subNorm);
+      const isKnownAppValue = extraAppValues.some((v) => v === subNorm);
       if (
         !row.subtype.match(
           /^(factory|test|ota_[0-9]|ota_1[0-5]|test|0x00)$|^(0x)(([1][0-9a-fA-F])|[2][0])$/
-        )
+        ) &&
+        !isKnownAppName &&
+        !isKnownAppValue
       ) {
         return 'When type is "app", the subtype field can only be specified as "factory" (0x00), "ota_0" (0x10) … "ota_15" (0x1F) or "test" (0x20)';
       }
     }
     // For type "data"
     if (row.type.match(/^(0x01|data)$/)) {
+      const dataExtras = extraSubtypes.filter((e) => e.type === "data");
+      const extraDataNames = dataExtras.map((e) => e.name);
+      const extraDataValues = dataExtras.map((e) => e.value);
+      const subNorm = row.subtype.toLowerCase();
+      const isKnownName = extraDataNames.some((n) => n === subNorm);
+      const isKnownValue = extraDataValues.some((v) => v === subNorm);
       if (
         !row.subtype.match(
           /^(ota|phy|nvs|nvs_keys|spiffs|coredump|fat)$|^(0x)(([0][0-6])|[8][0-2])$/
-        )
+        ) &&
+        !isKnownName &&
+        !isKnownValue
       ) {
         return 'When type is "data", the subtype field can be specified as "ota" (0x00), "phy" (0x01), "nvs" (0x02), "nvs_keys" (0x04), "fat" (0x81), "spiffs" (0x82) or a range of other component-specific subtypes (0x05, 0x06, 0x80, 0x81, 0x82)';
       }

@@ -66,7 +66,7 @@ export const usePartitionTableStore = defineStore("partitionTable", () => {
 
   function save() {
     rows.value.forEach((row) => row.error = "");
-    const { row, error, ok } = isValidJSON(rows.value);
+    const { row, error, ok } = isValidJSON(rows.value, extraSubtypes.value);
     if (!ok) {
       rows.value[row].error = error;
       console.log(error, row);
