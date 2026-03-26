@@ -25,10 +25,43 @@ import {
   Webview,
 } from "vscode";
 import { join } from "path";
+import { existsSync, readFileSync as fsReadFileSync } from "fs";
 import { ESP } from "../../config";
 import { readFileSync } from "../../utils";
 import { writeFile } from "fs-extra";
 import { Logger } from "../../logger/logger";
+
+interface ExtraSubtype {
+  type: string;
+  name: string;
+  value: string;
+}
+
+function parseExtraSubtypesInc(workspacePath: string): ExtraSubtype[] {
+  const incPath = join(
+    workspacePath,
+    "build",
+    "config",
+    "extra_partition_subtypes.inc"
+  );
+  if (!existsSync(incPath)) {
+    return [];
+  }
+  const content = fsReadFileSync(incPath, "utf8");
+  const result: ExtraSubtype[] = [];
+  // TODO: names with underscores (e.g. FOO_BAR) need a different split than TYPE_NAME.
+  const lineRegex =
+    /ESP_PARTITION_SUBTYPE_(\w+)_(\w+)\s*=\s*(0x[0-9a-fA-F]+)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = lineRegex.exec(content)) !== null) {
+    result.push({
+      type: match[1].toLowerCase(),
+      name: match[2].toLowerCase(),
+      value: match[3].toLowerCase(),
+    });
+  }
+  return result;
+}
 
 export class PartitionTableEditorPanel {
   private static instance: PartitionTableEditorPanel;
