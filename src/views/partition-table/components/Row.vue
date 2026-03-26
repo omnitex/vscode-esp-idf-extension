@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { usePartitionTableStore } from "../store";
 import { IconQuestion, IconTrash } from "@iconify-prerendered/vue-codicon";
+
+const store = usePartitionTableStore();
 
 const props = defineProps<{
   sName: string;
@@ -23,8 +26,9 @@ const types = computed(() => {
 });
 
 const subtypes = computed(() => {
+  const base: string[] = [];
   if (props.sType === "app") {
-    return [
+    base.push(
       "factory",
       "ota_0",
       "ota_1",
@@ -42,12 +46,16 @@ const subtypes = computed(() => {
       "ota_13",
       "ota_14",
       "ota_15",
-      "test",
-    ];
+      "test"
+    );
   } else if (props.sType === "data") {
-    return ["fat", "ota", "phy", "nvs", "nvs_keys", "spiffs", "coredump"];
+    base.push("fat", "ota", "phy", "nvs", "nvs_keys", "spiffs", "coredump");
   }
-  return [];
+  // TODO: extras use lowercase names from .inc; CSV subtype may be mixed case — align or normalize on save/validate (Task 5+).
+  const extras = store.extraSubtypes
+    .filter((e) => e.type === props.sType)
+    .map((e) => e.name);
+  return [...base, ...extras];
 });
 </script>
 
