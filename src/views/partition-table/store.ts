@@ -43,9 +43,16 @@ export namespace PartitionTable {
   }
 }
 
+export interface ExtraSubtype {
+  type: string;
+  name: string;
+  value: string;
+}
+
 export const usePartitionTableStore = defineStore("partitionTable", () => {
   const rows: Ref<PartitionTable.Row[]> = ref([]);
   const dirty: Ref<boolean> = ref(false);
+  const extraSubtypes: Ref<ExtraSubtype[]> = ref([]);
 
   function addRow(row: PartitionTable.Row) {
     rows.value.push(row);
@@ -83,12 +90,13 @@ export const usePartitionTableStore = defineStore("partitionTable", () => {
     });
   }
 
-  return { 
+  return {
     rows,
     dirty,
+    extraSubtypes,
     addRow,
     deleteRow,
     save,
-    initDataRequest
-  }
+    initDataRequest,
+  };
 });

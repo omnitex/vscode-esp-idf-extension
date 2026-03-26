@@ -37,6 +37,10 @@ window.addEventListener("message", (event) => {
         const rows = CSV2JSON<PartitionTable.Row>(message.csv);
         store.rows = rows;
       }
+      // TODO: If host omits extraSubtypes, prior session extras remain; extension currently always sends the array.
+      if (message.extraSubtypes) {
+        store.extraSubtypes = message.extraSubtypes;
+      }
       break;
     default:
       break;
